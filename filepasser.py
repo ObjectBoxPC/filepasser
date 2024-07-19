@@ -16,46 +16,46 @@ INDEX_PAGE = """<!DOCTYPE html>
         <title>File Passer</title>
     </head>
     <body>
-        <form id="passer-form">
+        <form id="upload-form">
             <div>
-                <label>Select file: <input type="file" required="required" id="file-select"/></label>
+                <label>Select file: <input type="file" required="required" id="upload-file"/></label>
             </div>
             <div>
-                <label>Name: <input type="text" required="required" id="filename"/></label>
+                <label>Name: <input type="text" required="required" id="upload-name"/></label>
             </div>
             <div>
-                <button type="submit" id="send">Send</button>
+                <button type="submit" id="upload-submit">Send</button>
             </div>
         </form>
-        <p id="status"></p>
+        <p id="upload-status"></p>
         <script>
         (function (document, XMLHttpRequest, JSON) {
-            var passerForm = document.getElementById('passer-form');
-            var fileSelect = document.getElementById('file-select');
-            var filenameInput = document.getElementById('filename');
-            var sendButton = document.getElementById('send');
-            var status = document.getElementById('status');
+            var uploadForm = document.getElementById('upload-form');
+            var uploadFile = document.getElementById('upload-file');
+            var uploadName = document.getElementById('upload-name');
+            var uploadSubmit = document.getElementById('upload-submit');
+            var uploadStatus = document.getElementById('upload-status');
 
-            fileSelect.addEventListener('change', function () {
-                filenameInput.value = fileSelect.files[0].name;
+            uploadFile.addEventListener('change', function (e) {
+                uploadName.value = e.target.files[0].name;
             });
 
-            sendButton.addEventListener('click', function (e) {
-                if (passerForm.reportValidity()) {
+            uploadSubmit.addEventListener('click', function (e) {
+                if (uploadForm.reportValidity()) {
                     var fileReader = new FileReader();
                     fileReader.addEventListener('load', function () {
                         var request = {
-                            name: filenameInput.value,
+                            name: uploadName.value,
                             data: fileReader.result.replace(/data:.*base64,/, ''),
                         };
                         var xhr = new XMLHttpRequest();
                         xhr.open('POST', '/send');
                         xhr.addEventListener('load', function () {
-                            status.textContent = xhr.responseText;
+                            uploadStatus.textContent = xhr.responseText;
                         });
                         xhr.send(JSON.stringify(request));
                     });
-                    fileReader.readAsDataURL(fileSelect.files[0]);
+                    fileReader.readAsDataURL(uploadFile.files[0]);
                 }
                 e.preventDefault();
             });
