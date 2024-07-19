@@ -107,6 +107,7 @@ class Server(http.server.ThreadingHTTPServer):
 server = Server(("::", HTTP_SERVER_PORT), RequestHandler)
 
 try:
+    print("Starting server on port {}...".format(HTTP_SERVER_PORT))
     server.serve_forever()
 except KeyboardInterrupt:
     print("Exiting")
