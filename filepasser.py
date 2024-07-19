@@ -16,6 +16,11 @@ INDEX_PAGE = """<!DOCTYPE html>
         <title>File Passer</title>
     </head>
     <body>
+        <h1>File Passer</h1>
+        <h2>Directory Listing for <span id="directory-path">.</span></h2>
+        <p id="directory-list-status"></p>
+        <ul id="directory-list"></ul>
+        <h2>Upload</h2>
         <form id="upload-form">
             <div>
                 <label>Select file: <input type="file" required="required" id="upload-file"/></label>
@@ -29,12 +34,51 @@ INDEX_PAGE = """<!DOCTYPE html>
         </form>
         <p id="upload-status"></p>
         <script>
-        (function (document, XMLHttpRequest, JSON) {
+        (function (document, window, XMLHttpRequest, JSON) {
+            var directoryPath = document.getElementById('directory-path');
+            var directoryListStatus = document.getElementById('directory-list-status');
+            var directoryList = document.getElementById('directory-list');
             var uploadForm = document.getElementById('upload-form');
             var uploadFile = document.getElementById('upload-file');
             var uploadName = document.getElementById('upload-name');
             var uploadSubmit = document.getElementById('upload-submit');
             var uploadStatus = document.getElementById('upload-status');
+
+            function loadDirectoryListing() {
+                var directory = location.hash.slice(2);
+                directoryPath.textContent = '/' + directory;
+                var request = { dir: directory };
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/dirlist');
+                xhr.addEventListener('load', function () {
+                    directoryList.textContent = '';
+                    if (xhr.status !== 200) {
+                        directoryListStatus.textContent = xhr.responseText;
+                        return;
+                    }
+                    directoryListStatus.textContent = '';
+                    var response = JSON.parse(xhr.responseText);
+                    response.forEach(function (entry) {
+                        var listItem = document.createElement('li');
+                        listItemLink = document.createElement('a');
+                        listItemLink.href = entry.path;
+                        listItemLink.textContent = entry.name;
+                        if (entry.type === 'dir') {
+                            listItemLink.textContent += '/';
+                            listItemLink.addEventListener('click', function (e) {
+                                window.location.hash = '#/' + entry.path;
+                                e.preventDefault();
+                            });
+                        }
+                        listItem.appendChild(listItemLink);
+                        directoryList.appendChild(listItem);
+                    });
+                });
+                xhr.send(JSON.stringify(request));
+            }
+
+            window.addEventListener('DOMContentLoaded', loadDirectoryListing);
+            window.addEventListener('hashchange', loadDirectoryListing);
 
             uploadFile.addEventListener('change', function (e) {
                 uploadName.value = e.target.files[0].name;
@@ -45,6 +89,7 @@ INDEX_PAGE = """<!DOCTYPE html>
                     var fileReader = new FileReader();
                     fileReader.addEventListener('load', function () {
                         var request = {
+                            dir: window.location.hash.slice(2),
                             name: uploadName.value,
                             data: fileReader.result.replace(/data:.*base64,/, ''),
                         };
@@ -59,12 +104,22 @@ INDEX_PAGE = """<!DOCTYPE html>
                 }
                 e.preventDefault();
             });
-        })(document, XMLHttpRequest, JSON);
+        })(document, window, XMLHttpRequest, JSON);
         </script>
     </body>
 </html>"""
 
-class RequestHandler(http.server.BaseHTTPRequestHandler):
+def is_valid_relative_dir(path):
+    return not (path.is_absolute() or '..' in path.parts)
+
+def get_dirlist_data(path):
+    return {
+        "type": "dir" if path.is_dir() else "file",
+        "name": path.name,
+        "path": str(path),
+    }
+
+class RequestHandler(http.server.SimpleHTTPRequestHandler):
     server_version = "FilePasser"
     protocol_version = "HTTP/1.1"
 
@@ -76,19 +131,37 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
             self._send_simple_response(http.HTTPStatus.OK, "text/html", INDEX_PAGE)
             return
 
-        self._send_simple_response(http.HTTPStatus.NOT_FOUND, "text/plain", "Not found")
+        super().do_GET()
 
     def do_POST(self):
-        if self.path == "/send":
-            request_length = int(self.headers["Content-Length"])
-            request = json.loads(self.rfile.read(request_length))
-            try:
-                with open(pathlib.PurePath(request["name"]).name, "xb") as file:
+        request_length = int(self.headers["Content-Length"])
+        request = json.loads(self.rfile.read(request_length))
+
+        try:
+            if self.path == "/send":
+                dir_path = pathlib.PurePath(request["dir"])
+                if not is_valid_relative_dir(dir_path):
+                    raise Exception("Invalid directory")
+                base_filename = pathlib.PurePath(request["name"]).name
+                file_path = pathlib.Path(dir_path, base_filename)
+                with file_path.open("xb") as file:
                     file.write(base64.b64decode(request["data"].encode()))
-            except Exception as e:
-                self._send_simple_response(http.HTTPStatus.INTERNAL_SERVER_ERROR, "text/plain", "Error: {}".format(e))
-            self._send_simple_response(http.HTTPStatus.OK, "text/plain", "OK")
-            return
+                self._send_simple_response(http.HTTPStatus.OK, "text/plain", "OK")
+                return
+
+            if self.path == '/dirlist':
+                dir_path = pathlib.Path(request["dir"])
+                if not is_valid_relative_dir(dir_path):
+                    raise Exception("Invalid directory")
+                if not dir_path.is_dir():
+                    raise Exception("Not a directory")
+                response = [get_dirlist_data(x) for x in dir_path.iterdir()]
+                self._send_simple_response(http.HTTPStatus.OK, "application/json", json.dumps(response))
+
+                return
+
+        except Exception as e:
+            self._send_simple_response(http.HTTPStatus.INTERNAL_SERVER_ERROR, "text/plain", "Error: {}".format(e))
 
         self._send_simple_response(http.HTTPStatus.NOT_FOUND, "text/plain", "Not found")
 
