@@ -52,12 +52,12 @@ INDEX_PAGE = """<!DOCTYPE html>
                 xhr.open('POST', '/dirlist');
                 xhr.addEventListener('load', function () {
                     directoryList.textContent = '';
-                    if (xhr.status !== 200) {
-                        directoryListStatus.textContent = xhr.responseText;
-                        return;
-                    }
                     directoryListStatus.textContent = '';
                     var response = JSON.parse(xhr.responseText);
+                    if (response.error) {
+                        directoryListStatus.textContent = 'Error: ' + response.error;
+                        return;
+                    }
                     response.forEach(function (entry) {
                         var listItem = document.createElement('li');
                         listItemLink = document.createElement('a');
@@ -96,7 +96,12 @@ INDEX_PAGE = """<!DOCTYPE html>
                         var xhr = new XMLHttpRequest();
                         xhr.open('POST', '/send');
                         xhr.addEventListener('load', function () {
-                            uploadStatus.textContent = xhr.responseText;
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.result) {
+                                uploadStatus.textContent = response.result;
+                            } else {
+                                uploadStatus.textContent = 'Error: ' + response.error;
+                            }
                         });
                         xhr.send(JSON.stringify(request));
                     });
@@ -146,7 +151,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 file_path = pathlib.Path(dir_path, base_filename)
                 with file_path.open("xb") as file:
                     file.write(base64.b64decode(request["data"].encode()))
-                self._send_simple_response(http.HTTPStatus.OK, "text/plain", "OK")
+                self._send_json_response(http.HTTPStatus.OK, { "result": "OK" })
                 return
 
             if self.path == '/dirlist':
@@ -156,14 +161,14 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                 if not dir_path.is_dir():
                     raise Exception("Not a directory")
                 response = [get_dirlist_data(x) for x in dir_path.iterdir()]
-                self._send_simple_response(http.HTTPStatus.OK, "application/json", json.dumps(response))
+                self._send_json_response(http.HTTPStatus.OK, response)
 
                 return
 
         except Exception as e:
-            self._send_simple_response(http.HTTPStatus.INTERNAL_SERVER_ERROR, "text/plain", "Error: {}".format(e))
+            self._send_json_response(http.HTTPStatus.INTERNAL_SERVER_ERROR, { "error": str(e) })
 
-        self._send_simple_response(http.HTTPStatus.NOT_FOUND, "text/plain", "Not found")
+        self._send_json_response(http.HTTPStatus.NOT_FOUND, { "error": "Not found" })
 
     def _send_simple_response(self, code, content_type, body):
         self.send_response(code)
@@ -173,6 +178,9 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Length", len(body))
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_json_response(self, code, data):
+        self._send_simple_response(code, "application/json", json.dumps(data))
 
 class Server(http.server.ThreadingHTTPServer):
     address_family = socket.AF_INET6
