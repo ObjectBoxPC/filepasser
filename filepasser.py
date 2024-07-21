@@ -112,7 +112,7 @@ INDEX_PAGE = """<!DOCTYPE html>
         })(document, window, XMLHttpRequest, JSON);
         </script>
     </body>
-</html>"""
+</html>""".encode()
 
 def is_valid_relative_dir(path):
     return not (path.is_absolute() or '..' in path.parts)
@@ -173,14 +173,12 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
     def _send_simple_response(self, code, content_type, body):
         self.send_response(code)
         self.send_header("Content-Type", content_type)
-        if type(body) is str:
-            body = body.encode("utf-8")
         self.send_header("Content-Length", len(body))
         self.end_headers()
         self.wfile.write(body)
 
     def _send_json_response(self, code, data):
-        self._send_simple_response(code, "application/json", json.dumps(data))
+        self._send_simple_response(code, "application/json", json.dumps(data).encode())
 
 class Server(http.server.ThreadingHTTPServer):
     address_family = socket.AF_INET6
