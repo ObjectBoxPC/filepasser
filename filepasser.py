@@ -6,8 +6,10 @@ import http.server
 import json
 import pathlib
 import socket
+import sys
 
-HTTP_SERVER_PORT = 8616
+DEFAULT_BIND_ADDR = "::"
+DEFAULT_PORT = 8616
 INDEX_PAGE = """<!DOCTYPE html>
 <html>
     <head>
@@ -181,12 +183,17 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         self._send_simple_response(code, "application/json", json.dumps(data).encode())
 
 class Server(http.server.ThreadingHTTPServer):
-    address_family = socket.AF_INET6
+    def __init__(self, server_address, RequestHandlerClass):
+        self.address_family = socket.getaddrinfo(*server_address)[0][0]
+        super().__init__(server_address, RequestHandlerClass)
 
-server = Server(("::", HTTP_SERVER_PORT), RequestHandler)
+args = sys.argv + [None] * (3 - len(sys.argv))
+bind_addr = args[1] or DEFAULT_BIND_ADDR
+port = int(args[2]) if args[2] else DEFAULT_PORT
+server = Server((bind_addr, port), RequestHandler)
 
 try:
-    print("Starting server on port {}...".format(HTTP_SERVER_PORT))
+    print("Starting server on port {}...".format(port))
     server.serve_forever()
 except KeyboardInterrupt:
     print("Exiting")
