@@ -8,8 +8,8 @@ import pathlib
 import socket
 import sys
 
-DEFAULT_BIND_ADDR = "::"
 DEFAULT_PORT = 8616
+DEFAULT_BIND_ADDR = "::"
 INDEX_PAGE = """<!DOCTYPE html>
 <html>
     <head>
@@ -188,8 +188,8 @@ class Server(http.server.ThreadingHTTPServer):
         super().__init__(server_address, RequestHandlerClass)
 
 args = sys.argv + [None] * (3 - len(sys.argv))
-bind_addr = args[1] or DEFAULT_BIND_ADDR
-port = int(args[2]) if args[2] else DEFAULT_PORT
+port = int(args[1]) if args[1] else DEFAULT_PORT
+bind_addr = args[2] or DEFAULT_BIND_ADDR
 server = Server((bind_addr, port), RequestHandler)
 
 try:
