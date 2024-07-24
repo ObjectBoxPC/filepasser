@@ -183,14 +183,14 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         self._send_simple_response(code, "application/json", json.dumps(data).encode())
 
 class Server(http.server.ThreadingHTTPServer):
-    def __init__(self, server_address, RequestHandlerClass):
+    def __init__(self, server_address):
         self.address_family = socket.getaddrinfo(*server_address)[0][0]
-        super().__init__(server_address, RequestHandlerClass)
+        super().__init__(server_address, RequestHandler)
 
 args = sys.argv + [None] * (3 - len(sys.argv))
 port = int(args[1]) if args[1] else DEFAULT_PORT
 bind_addr = args[2] or DEFAULT_BIND_ADDR
-server = Server((bind_addr, port), RequestHandler)
+server = Server((bind_addr, port))
 
 try:
     print("Starting server on port {}...".format(port))
