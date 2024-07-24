@@ -130,9 +130,6 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
     server_version = "FilePasser"
     protocol_version = "HTTP/1.1"
 
-    def __init__(self, request, client_address, server):
-        super().__init__(request, client_address, server)
-
     def do_GET(self):
         if self.path == "/":
             self._send_simple_response(http.HTTPStatus.OK, "text/html", INDEX_PAGE)
