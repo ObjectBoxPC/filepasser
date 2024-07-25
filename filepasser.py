@@ -185,8 +185,9 @@ class Server(http.server.ThreadingHTTPServer):
         super().__init__(server_address, RequestHandler)
 
 args = sys.argv + [None] * (3 - len(sys.argv))
-port = int(args[1]) if args[1] else DEFAULT_PORT
-bind_addr = args[2] or DEFAULT_BIND_ADDR
+port, bind_addr = args[1:3]
+port = int(port) if port else DEFAULT_PORT
+bind_addr = bind_addr or DEFAULT_BIND_ADDR
 server = Server((bind_addr, port))
 
 try:
