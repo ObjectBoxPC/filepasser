@@ -36,7 +36,7 @@ INDEX_PAGE = """<!DOCTYPE html>
         </form>
         <p id="upload-status"></p>
         <script>
-        (function (document, window, XMLHttpRequest, JSON) {
+        (function (document, window, FileReader, XMLHttpRequest, JSON) {
             var directoryPath = document.getElementById('directory-path');
             var directoryListStatus = document.getElementById('directory-list-status');
             var directoryList = document.getElementById('directory-list');
@@ -111,7 +111,7 @@ INDEX_PAGE = """<!DOCTYPE html>
                 }
                 e.preventDefault();
             });
-        })(document, window, XMLHttpRequest, JSON);
+        })(document, window, FileReader, XMLHttpRequest, JSON);
         </script>
     </body>
 </html>""".encode()
