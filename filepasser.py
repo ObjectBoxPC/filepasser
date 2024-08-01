@@ -10,7 +10,7 @@ import sys
 
 DEFAULT_PORT = 8616
 DEFAULT_BIND_ADDR = "::"
-INDEX_PAGE = """<!DOCTYPE html>
+INDEX_PAGE = b"""<!DOCTYPE html>
 <html>
     <head>
         <meta charset="UTF-8"/>
@@ -114,7 +114,7 @@ INDEX_PAGE = """<!DOCTYPE html>
         })(document, window, FileReader, XMLHttpRequest, JSON);
         </script>
     </body>
-</html>""".encode()
+</html>"""
 
 def is_valid_relative_dir(path):
     return not (path.is_absolute() or '..' in path.parts)
