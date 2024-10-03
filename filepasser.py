@@ -47,7 +47,7 @@ INDEX_PAGE = b"""<!DOCTYPE html>
             var uploadStatus = document.getElementById('upload-status');
 
             function loadDirectoryListing() {
-                var directory = location.hash.slice(2);
+                var directory = window.location.hash.slice(2);
                 directoryPath.textContent = '/' + directory;
                 var request = { dir: directory };
                 var xhr = new XMLHttpRequest();
