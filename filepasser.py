@@ -36,7 +36,7 @@ INDEX_PAGE = b"""<!DOCTYPE html>
         </form>
         <p id="upload-status"></p>
         <script>
-        (function (document, window, FileReader, XMLHttpRequest, JSON, encodeURIComponent) {
+        (function (document, window, FileReader, XMLHttpRequest, JSON, encodeURIComponent, decodeURIComponent) {
             var directoryPath = document.getElementById('directory-path');
             var directoryListStatus = document.getElementById('directory-list-status');
             var directoryList = document.getElementById('directory-list');
@@ -47,7 +47,7 @@ INDEX_PAGE = b"""<!DOCTYPE html>
             var uploadStatus = document.getElementById('upload-status');
 
             function loadDirectoryListing() {
-                var directory = window.location.hash.slice(2);
+                var directory = decodeURIComponent(window.location.hash.slice(2));
                 directoryPath.textContent = '/' + directory;
                 var request = { dir: directory };
                 var xhr = new XMLHttpRequest();
@@ -115,7 +115,7 @@ INDEX_PAGE = b"""<!DOCTYPE html>
                 }
                 e.preventDefault();
             });
-        })(document, window, FileReader, XMLHttpRequest, JSON, encodeURIComponent);
+        })(document, window, FileReader, XMLHttpRequest, JSON, encodeURIComponent, decodeURIComponent);
         </script>
     </body>
 </html>"""
