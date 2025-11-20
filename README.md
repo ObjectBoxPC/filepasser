@@ -1,5 +1,7 @@
 # File Passer
 
+**DEPRECATED**: I recommend using [PairDrop](https://pairdrop.net/) for the usual case of sending a few files from one system to another over the same network. It is more convenient and provides end-to-end encryption. If you still want to use this, please read the "Security" section.
+
 File Passer is a Python script for transferring files between systems on a local network. It creates a Web server and page for browsing, downloading, and uploading files.
 
 ## Requirements
@@ -20,7 +22,7 @@ By default, the server will listen on port 8616 and bind itself to all interface
 
 ## Security
 
-File Passer does not perform any authentication, so anyone with access to the server can download or upload files from the directory that the script is started from. The server should only be exposed to a trusted environment.
+File Passer does not perform any authentication, so anyone with access to the server can download or upload files from the directory that the script is started from. In addition, the connection is not encrypted so it is vulnerable to packet sniffing. The server should only be exposed to a trusted environment.
 
 ## License
 
